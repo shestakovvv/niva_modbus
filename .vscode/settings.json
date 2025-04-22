@@ -1,0 +1,26 @@
+{
+    "files.associations": {
+        "stdint.h": "c",
+        "modbus.h": "c",
+        "stdbool.h": "c",
+        "function_codes.h": "c",
+        "exception_codes.h": "c",
+        "stdio.h": "c",
+        "algorithm": "c",
+        "functional": "c",
+        "optional": "c",
+        "system_error": "c",
+        "type_traits": "c",
+        "xtr1common": "c",
+        "xutility": "c",
+        "charconv": "c",
+        "format": "c",
+        "array": "c",
+        "tuple": "c",
+        "utility": "c",
+        "xmemory": "c",
+        "stddef.h": "c",
+        "exception": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}
