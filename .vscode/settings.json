@@ -20,7 +20,17 @@
         "utility": "c",
         "xmemory": "c",
         "stddef.h": "c",
-        "exception": "c"
+        "exception": "c",
+        "assert.h": "c",
+        "cstdint": "c",
+        "unity.h": "c",
+        "crc16.h": "c",
+        "endianess.h": "c",
+        "span": "c",
+        "vector": "c",
+        "xstring": "c",
+        "chrono": "c",
+        "xlocale": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -36,23 +36,28 @@ endif()
 
 
 
-# if(BUILD_TESTS)
-#     add_executable(nanomodbus_tests nanomodbus.c tests/nanomodbus_tests.c)
-#     target_link_libraries(nanomodbus_tests pthread)
+if(BUILD_TESTS)
+    add_library(unity STATIC)
+    target_sources(unity PRIVATE tests/unity/src/unity.c)
+    target_include_directories(unity PUBLIC tests/unity/src)
 
-#     add_executable(server_disabled nanomodbus.c tests/server_disabled.c)
-#     target_compile_definitions(server_disabled PUBLIC NMBS_SERVER_DISABLED)
+    enable_testing()
+    
+    add_executable(crc16_tests tests/crc16_tests.c src/modbus/crc16.c)
+    target_include_directories(crc16_tests PRIVATE src/modbus)
+    target_link_libraries(crc16_tests PRIVATE unity)
+    add_test(NAME Crc16Tests COMMAND crc16_tests)
+    
+    add_executable(endianess_tests tests/endianess_tests.c)
+    target_include_directories(endianess_tests PRIVATE src/modbus)
+    target_link_libraries(endianess_tests PRIVATE unity)
+    add_test(NAME EndianessTests COMMAND endianess_tests)
 
-#     add_executable(client_disabled nanomodbus.c tests/client_disabled.c)
-#     target_compile_definitions(client_disabled PUBLIC NMBS_CLIENT_DISABLED)
+    add_executable(broken_packets_tests tests/broken_packets_tests.c)
+    target_link_libraries(broken_packets_tests niva_modbus unity)
+    add_test(NAME BrokenPacketsTests COMMAND broken_packets_tests)
 
-#     add_executable(multi_server_rtu nanomodbus.c tests/multi_server_rtu.c)
-#     target_compile_definitions(multi_server_rtu PUBLIC NMBS_DEBUG)
-#     target_link_libraries(multi_server_rtu pthread)
-
-#     enable_testing()
-#     add_test(NAME test_general COMMAND $<TARGET_FILE:nanomodbus_tests>)
-#     add_test(NAME test_server_disabled COMMAND $<TARGET_FILE:server_disabled>)
-#     add_test(NAME test_client_disabled COMMAND $<TARGET_FILE:client_disabled>)
-#     add_test(NAME test_multi_server_rtu COMMAND $<TARGET_FILE:multi_server_rtu>)
-# endif()
+    add_executable(read_coils_and_discretes_tests tests/read_coils_and_discretes_tests.c)
+    target_link_libraries(read_coils_and_discretes_tests PRIVATE niva_modbus unity)
+    add_test(NAME ReadCoilsAndDiscretes COMMAND read_coils_and_discretes_tests)
+endif()

@@ -52,6 +52,11 @@ int8_t modbus_server_poll(
     size_t data_len, 
     uint8_t* response_data, 
     size_t* response_data_len) {
+        if (data[0] != server->address) {
+            server->response_required = false;
+            return MODBUS_OK;
+        }
+
         ModbusAdu adu = {0};
         int8_t result = request_buffer_to_modbus_adu(data, data_len, &adu);
         if (result != MODBUS_OK) {
