@@ -395,7 +395,7 @@ static int8_t process_read_input_registers(ModbusServer* server, ModbusPdu* pdu,
 
 static int8_t process_read_holding_registers(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu) {
     ModbusRequestRead request = {
-        .type = MODBUS_TYPE_DISCRETE_INPUT
+        .type = MODBUS_TYPE_HOLDING_REGISTER
     };
     int8_t result = parse_read_request(server, pdu, &request);
     if (result != MODBUS_OK) {
