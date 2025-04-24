@@ -1,0 +1,33 @@
+{
+    "files.associations": {
+        "nanomodbus.h": "c",
+        "string.h": "c",
+        "main.h": "c",
+        "usart.h": "c",
+        "algorithm": "c",
+        "iterator": "c",
+        "xhash": "c",
+        "xmemory": "c",
+        "xutility": "c",
+        "format": "c",
+        "mbfunc.h": "c",
+        "port.h": "c",
+        "stm32f3xx_hal_tim.h": "c",
+        "inttypes.h": "c",
+        "array": "c",
+        "deque": "c",
+        "forward_list": "c",
+        "list": "c",
+        "queue": "c",
+        "span": "c",
+        "vector": "c",
+        "xlocinfo": "c",
+        "xstring": "c",
+        "xtree": "c",
+        "string_view": "c",
+        "type_traits": "c",
+        "mb.h": "c",
+        "stm32f3xx_hal.h": "c",
+        "mbport.h": "c"
+    }
+}

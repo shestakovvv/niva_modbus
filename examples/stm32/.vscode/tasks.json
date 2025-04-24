@@ -1,0 +1,144 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cmake",
+      "label": "CMake: configure",
+      "command": "configure",
+      "preset": "${command:cmake.activeConfigurePresetName}",
+      "problemMatcher": [],
+      "detail": "CMake template configure task",
+      "group": {
+        "kind": "build"
+      }
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: build",
+      "command": "build",
+      "preset": "${command:cmake.activeBuildPresetName}",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$gcc"],
+      "detail": "CMake template build task"
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: clean",
+      "command": "clean",
+      "preset": "${command:cmake.activeBuildPresetName}",
+      "problemMatcher": [],
+      "detail": "CMake template clean task",
+      "group": "build"
+    },
+    {
+      "type": "shell",
+      "label": "Cmake: Flash",
+      "dependsOn": "CMake: build",
+      "command": "openocd",
+      "windows": {
+        "args": [
+          "-f",
+          "${input:workspaceFolderForwardSlash}/.config/openocd/${input:stlinkName}.cfg",
+          "-f",
+          "target/${input:stmSeries}.cfg",
+          "-c",
+          "program ${input:launchTargetDirectoryForwardSlash}/${input:activeFolderNameForwardSlash}.bin 0x08000000 verify reset exit"
+        ]
+      },
+      "linux": {
+        "args": [
+          "-f",
+          "'${workspaceFolder}/.config/openocd/${input:stlinkName}.cfg'",
+          "-f",
+          "target/${input:stmSeries}.cfg",
+          "-c",
+          //   "'program ${command:cmake.launchTargetDirectory}/motor_controller_v2.bin 0x08000000 verify reset exit'"
+          "'program ${command:cmake.launchTargetDirectory}/${command:cmake.activeFolderName}.bin 0x08000000 verify reset exit'"
+        ]
+      },
+      "group": {
+        "kind": "build"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "workspaceFolderForwardSlash",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": {
+        "text": "${workspaceFolder}",
+        "find": "\\\\",
+        "replace": "/",
+        "flags": "g"
+      }
+    },
+    {
+      "id": "workspaceFolderForwardSlash",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": {
+        "text": "${workspaceFolder}",
+        "find": "\\\\",
+        "replace": "/",
+        "flags": "g"
+      }
+    },
+    {
+      "id": "launchTargetDirectoryForwardSlash",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": {
+        "text": "${command:cmake.launchTargetDirectory}",
+        "find": "\\\\",
+        "replace": "/",
+        "flags": "g"
+      }
+    },
+    {
+      "id": "activeFolderNameForwardSlash",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": {
+        "text": "${command:cmake.activeFolderName}",
+        "find": "\\\\",
+        "replace": "/",
+        "flags": "g"
+      }
+    },
+    {
+      "id": "stlinkName",
+      "type": "pickString",
+      "description": "choose st-link programmer",
+      "options": [
+        "j_link",
+        "danik",
+        "danik_pink",
+        "valera_pink",
+        "eugene",
+        "valera_blue1",
+        "valera_blue2",
+        "stm32f3disco_A203001113",
+        "stm32f3disco_A210503988",
+        "stm32f3disco_A210501873",
+        "valera_pink_wi",
+        "valera_pink_wii"
+      ],
+      "default": "stm32f3disco_A203001113"
+      // type specific configuration attributes
+    },
+    {
+      "id": "stmSeries",
+      "type": "pickString",
+      "description": "choose stm32 series",
+      "options": ["stm32f1x", "stm32f3x", "stm32f4x", "stm32g4x"],
+      "default": "stm32f3x"
+      // type specific configuration attributes
+    }
+  ]
+}
