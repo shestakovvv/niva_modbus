@@ -87,6 +87,19 @@ void test_read_coils(void) {
         uint8_t expected[] = { 0x01, 0x81, 0x03, 0x00, 0x51 };
         TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, response_buffer, response_len);
     };
+    server.coils = NULL;
+    server.coils_count = 0;
+    // NULL data value
+    {
+        uint8_t request[256] = {
+            0x01, 0x01, 0x00, 0x13, 0x00, 0x13, 0x8C, 0x02
+        };
+        int8_t result = modbus_server_poll(&server, request, 8, response_buffer, &response_len);
+        TEST_ASSERT_EQUAL(MODBUS_EXC_ILLEGAL_DATA_ADDRESS, result);
+        TEST_ASSERT_EQUAL(true, server.response_required);
+        uint8_t expected[] = { 0x01, 0x81, 0x02, 0xC1, 0x91 };
+        TEST_ASSERT_EQUAL_HEX8_ARRAY(expected, response_buffer, response_len);
+    };
 }
 
 void setUp(void) {}
