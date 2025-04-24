@@ -39,6 +39,16 @@ typedef struct ModbusRequestWriteMultiple {
     uint8_t* values;
 } ModbusRequestWriteMultiple;
 
+typedef struct ModbusRequestReadWrite {
+    ModbusDataModelType type;
+    uint16_t read_starting_address;
+    uint16_t read_quantity;
+    uint16_t write_starting_address;
+    uint16_t write_quantity;
+    uint8_t write_byte_count;
+    uint8_t* write_values;
+} ModbusRequestReadWrite;
+
 typedef struct ModbusAdu {
     uint8_t server_address;
     ModbusPdu pdu;

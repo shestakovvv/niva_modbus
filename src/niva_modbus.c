@@ -23,7 +23,7 @@ void finalize_response(ModbusAdu* adu, int8_t exception, uint8_t* data, size_t* 
 static int8_t parse_read_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestRead* request);
 static int8_t parse_write_single_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestWrite* request);
 static int8_t parse_write_multiple_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestWriteMultiple* request);
-
+static int8_t parse_readwrite_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestReadWrite* request);
 
 static int8_t build_read_coils_response(ModbusServer* server, ModbusRequestRead* request, ModbusPdu* pdu);
 static int8_t build_read_discrete_inputs_response(ModbusServer* server, ModbusRequestRead* request, ModbusPdu* pdu);
@@ -44,6 +44,8 @@ static int8_t process_write_register(ModbusServer* server, ModbusPdu* pdu, Modbu
 
 static int8_t process_write_multiple_coils(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu);
 static int8_t process_write_multiple_registers(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu);
+
+static int8_t process_readwrite_multiple_registers(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu);
 
 
 int8_t modbus_server_poll(
@@ -175,7 +177,7 @@ int8_t process_pdu(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu
         case MODBUS_FUN_W_MULTIPLE_REGISTERS:
             return process_write_multiple_registers(server, pdu, response_pdu);
         case MODBUS_FUN_RW_MULTIPLE_REGISTERS:
-            return MODBUS_EXC_ILLEGAL_FUNCTION;           
+            return process_readwrite_multiple_registers(server, pdu, response_pdu);
         case MODBUS_FUN_MASK_WRITE_REGISTER:
             return MODBUS_EXC_ILLEGAL_FUNCTION;             
         case MODBUS_FUN_R_FIFO_QUEUE:
@@ -280,6 +282,41 @@ static int8_t parse_write_multiple_request(ModbusServer* server, ModbusPdu* pdu,
     }
 
     request->values = &pdu->data[5];
+    
+    return MODBUS_OK;
+}
+
+static int8_t parse_readwrite_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestReadWrite* request) {
+    if (pdu->data_len < 9) {
+        return MODBUS_EXC_ILLEGAL_DATA_VALUE;
+    }
+
+    request->read_starting_address   = uint8_to_uint16_big_endian(&pdu->data[0]);
+    request->read_quantity           = uint8_to_uint16_big_endian(&pdu->data[2]);
+    request->write_starting_address  = uint8_to_uint16_big_endian(&pdu->data[4]);
+    request->write_quantity          = uint8_to_uint16_big_endian(&pdu->data[6]);
+    request->write_byte_count        = pdu->data[8];
+
+    if (
+        request->read_quantity < 1 || request->read_quantity > 0x007D ||
+        request->write_quantity < 1 || request->write_quantity > 0x0079 ||
+        request->write_byte_count != request->write_quantity * 2
+    )
+        return MODBUS_EXC_ILLEGAL_DATA_VALUE;
+    
+    if (request->write_starting_address + request->write_quantity > get_registers_count(server, request->type)) {
+        return MODBUS_EXC_ILLEGAL_DATA_ADDRESS;
+    }
+
+    if (
+        request->read_quantity < 1 ||
+        request->read_quantity > get_registers_max_count(request->type) ||
+        request->read_starting_address + request->read_quantity > get_registers_count(server, request->type)
+    ) {
+        return MODBUS_EXC_ILLEGAL_DATA_ADDRESS;
+    }
+
+    request->write_values = &pdu->data[9];
     
     return MODBUS_OK;
 }
@@ -474,4 +511,28 @@ static int8_t process_write_multiple_registers(ModbusServer* server, ModbusPdu* 
     }
 
     return build_write_multiple_response(&request, response_pdu);
+}
+
+
+static int8_t process_readwrite_multiple_registers(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu) {
+    ModbusRequestReadWrite request = {
+        .type = MODBUS_TYPE_HOLDING_REGISTER
+    };
+    int8_t result = parse_readwrite_request(server, pdu, &request);
+    if (result != MODBUS_OK) {
+        return result;
+    }
+
+    uint16_t index = request.write_starting_address;
+    for (uint16_t i = 0; i < request.write_quantity; i++) {
+        server->holding_registers[index + i] = uint8_to_uint16_big_endian(&request.write_values[i * 2]);
+    }
+
+    ModbusRequestRead read_request = {
+        .type = request.type,
+        .starting_address = request.read_starting_address,
+        .quantity = request.read_quantity,
+    };
+
+    return build_read_holding_registers_response(server, &read_request, response_pdu);
 }
