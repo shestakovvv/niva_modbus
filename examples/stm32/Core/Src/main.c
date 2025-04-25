@@ -29,6 +29,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "niva_modbus.h"
+#include "niva_modbus_stm32.h"
 #include "stdio.h"
 #include "string.h"
 /* USER CODE END Includes */
@@ -51,24 +52,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern bool IS_FIRST_BYTE_RECEIVED;
-
-typedef struct RxPacket {
-  bool is_ready;
-  uint8_t data[MODBUS_BUFFER_LEN];
-  size_t len;
-} RxPacket;
-
-#define PACKETS_BUFFER_LEN 5
-RxPacket PACKETS_BUFFER[PACKETS_BUFFER_LEN];
-
-uint8_t RX_BUFFER[MODBUS_BUFFER_LEN * 2];
-uint8_t TX_BUFFER[MODBUS_BUFFER_LEN];
-
 #define DISCRETE_INPUTS_COUNT   100
 #define COILS_COUNT             100
 #define INPUT_REGISTERS_COUNT   100
-#define HOLDING_REGISTERS_COUNT 100
+#define HOLDING_REGISTERS_COUNT 2000
 DiscreteInput DISCRETE_INPUTS[DISCRETE_INPUTS_COUNT] = {0};
 Coil COILS[COILS_COUNT] = {0};
 InputRegister INPUT_REGISTERS[INPUT_REGISTERS_COUNT] = {0};
@@ -78,7 +65,7 @@ HoldingRegister HOLDING_REGISTERS[HOLDING_REGISTERS_COUNT] = {0};
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+#include "niva_modbus_stm32/usart.h"
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -110,7 +97,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -122,10 +109,9 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_DMA(&huart1, RX_BUFFER, MODBUS_BUFFER_LEN);
-  __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
 
-  ModbusServer server = {
+
+  ModbusServer MODBUS_SERVER = {
       .address = 1,
       .discrete_inputs = DISCRETE_INPUTS,
       .discrete_inputs_count = DISCRETE_INPUTS_COUNT,
@@ -137,10 +123,10 @@ int main(void)
       .holding_registers_count = HOLDING_REGISTERS_COUNT,
   };
 
-  server.coils[1] = 1;
-  server.coils[5] = 1;
+  MODBUS_SERVER.coils[1] = 1;
+  MODBUS_SERVER.coils[5] = 1;
 
-  size_t current_packet_num = 0;
+  modbus_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -148,34 +134,7 @@ int main(void)
 
   while (1)
   {
-    if (PACKETS_BUFFER[current_packet_num].is_ready) {
-      RxPacket* packet = &PACKETS_BUFFER[current_packet_num];
-
-      size_t tx_buffer_len = 0;
-      int8_t result = modbus_server_poll(
-        &server, 
-        packet->data, 
-        packet->len, 
-        TX_BUFFER, 
-        &tx_buffer_len);
-
-      if (server.response_required) {
-          if (result != MODBUS_OK) {
-            HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
-          }
-          HAL_UART_Transmit_DMA(&huart1, TX_BUFFER, tx_buffer_len);
-          server.holding_registers[3] += 1;
-      } else {
-        HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
-      }
-      HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
-
-      packet->is_ready = false;
-      current_packet_num++;
-      if (current_packet_num >= PACKETS_BUFFER_LEN) {
-        current_packet_num = 0;
-      }
-    }
+    modbus_update(&MODBUS_SERVER);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -238,52 +197,7 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-  static uint8_t* current_buffer_pos = RX_BUFFER;
-  static size_t current_packet_num = 0;
 
-  if (htim->Instance == htim3.Instance) {
-    HAL_UART_DMAStop(&huart1);
-
-    uint16_t received_len = MODBUS_BUFFER_LEN - __HAL_DMA_GET_COUNTER(huart1.hdmarx);
-
-    uint8_t* received_buffer = current_buffer_pos;
-    current_buffer_pos += received_len;
-    if (current_buffer_pos + MODBUS_BUFFER_LEN > RX_BUFFER + sizeof(RX_BUFFER)) {
-      current_buffer_pos = RX_BUFFER;
-    }
-    HAL_UART_Receive_DMA(&huart1, current_buffer_pos, MODBUS_BUFFER_LEN);
-    __HAL_UART_ENABLE_IT(&huart1, UART_IT_RXNE);
-
-    if (PACKETS_BUFFER[current_packet_num].is_ready) {
-      HAL_GPIO_TogglePin(LD5_GPIO_Port, LD5_Pin);
-      return;
-    }
-
-    PACKETS_BUFFER[current_packet_num].is_ready = true;
-    PACKETS_BUFFER[current_packet_num].len = received_len;
-    memcpy(PACKETS_BUFFER[current_packet_num].data, received_buffer, received_len);
-    current_packet_num++;
-
-    if (current_packet_num >= PACKETS_BUFFER_LEN) {
-      current_packet_num = 0;
-    }
-  }
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
-  if (huart->Instance == huart1.Instance) {
-    HAL_GPIO_TogglePin(LD9_GPIO_Port, LD9_Pin);
-    // TODO: handle errors (idle not detected while receive buffer)
-  }
-}
-
-void HAL_UART_ErrorCallback(UART_HandleTypeDef* huart) {
-  if (huart->Instance == huart1.Instance) {
-    HAL_GPIO_TogglePin(LD10_GPIO_Port, LD10_Pin);
-    // TODO: handle errors
-  }
-}
 /* USER CODE END 4 */
 
 /**

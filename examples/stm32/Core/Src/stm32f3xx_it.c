@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
+#include "niva_modbus_stm32.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -209,11 +210,12 @@ void SysTick_Handler(void)
 void DMA1_Channel4_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel4_IRQn 0 */
-
+  modbus_on_dma_tx_irq();
+  #ifdef HAL_MODBUS
   /* USER CODE END DMA1_Channel4_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart1_tx);
   /* USER CODE BEGIN DMA1_Channel4_IRQn 1 */
-
+  #endif
   /* USER CODE END DMA1_Channel4_IRQn 1 */
 }
 
@@ -223,11 +225,12 @@ void DMA1_Channel4_IRQHandler(void)
 void DMA1_Channel5_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel5_IRQn 0 */
-
+  modbus_on_dma_rx_irq();
+  #ifdef HAL_MODBUS
   /* USER CODE END DMA1_Channel5_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_usart1_rx);
   /* USER CODE BEGIN DMA1_Channel5_IRQn 1 */
-
+  #endif
   /* USER CODE END DMA1_Channel5_IRQn 1 */
 }
 
@@ -237,12 +240,12 @@ void DMA1_Channel5_IRQHandler(void)
 void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
-  IS_FIRST_BYTE_RECEIVED = false;
-
+  modbus_on_tim_irq();
+  #ifdef HAL_MODBUS
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
-
+  #endif
   /* USER CODE END TIM3_IRQn 1 */
 }
 
@@ -252,18 +255,12 @@ void TIM3_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-  if (!IS_FIRST_BYTE_RECEIVED) {
-    IS_FIRST_BYTE_RECEIVED = true;
-    HAL_TIM_Base_Start_IT(&htim3);
-  } else {
-    HAL_TIM_Base_Stop(&htim3);
-    HAL_TIM_Base_Start_IT(&htim3);
-  }
-
+  modbus_on_usart_irq();
+  #ifdef HAL_MODBUS
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
-
+  #endif
   /* USER CODE END USART1_IRQn 1 */
 }
 

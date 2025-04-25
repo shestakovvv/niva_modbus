@@ -39,6 +39,7 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
+add_subdirectory(lib/niva_modbus_stm32)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -72,6 +73,7 @@ target_compile_definitions(niva_modbus PUBLIC
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
     niva_modbus
+    niva_modbus_stm32
     # Add user defined libraries
 )
 

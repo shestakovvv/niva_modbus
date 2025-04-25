@@ -57,8 +57,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define MODBUS_BAUDRATE 115200
 #define MODBUS_TIMEOUT 35 / MODBUS_BAUDRATE
+#define MODBUS_BAUDRATE 115200
 #define DRDY_Pin GPIO_PIN_2
 #define DRDY_GPIO_Port GPIOE
 #define CS_I2C_SPI_Pin GPIO_PIN_3

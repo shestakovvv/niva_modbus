@@ -30,7 +30,15 @@
         "vector": "c",
         "xstring": "c",
         "chrono": "c",
-        "xlocale": "c"
+        "xlocale": "c",
+        "main.h": "c",
+        "tim.h": "c",
+        "config.h": "c",
+        "usart.h": "c",
+        "data_model.h": "c",
+        "led.h": "c",
+        "random": "c",
+        "queue": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
