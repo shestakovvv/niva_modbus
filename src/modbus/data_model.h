@@ -1,6 +1,6 @@
 #pragma once
 
-#define MODBUS_MIN_FRAME_SIZE               7
+#define MODBUS_MIN_FRAME_SIZE               4
 #define MODBUS_DISCRETE_INPUTS_MAX_COUNT    0x7D0 // TODO: add assert on this in init
 #define MODBUS_COILS_MAX_COUNT              0x7D0
 #define MODBUS_HOLDING_REGISTERS_MAX_COUNT  0x7D
