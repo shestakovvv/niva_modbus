@@ -23,6 +23,7 @@ void finalize_response(ModbusAdu* adu, int8_t exception, uint8_t* data, size_t* 
 static int8_t parse_read_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestRead* request);
 static int8_t parse_write_single_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestWrite* request);
 static int8_t parse_write_multiple_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestWriteMultiple* request);
+static int8_t parse_mask_write_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestMaskWrite* request);
 static int8_t parse_readwrite_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestReadWrite* request);
 
 static int8_t build_read_coils_response(ModbusServer* server, ModbusRequestRead* request, ModbusPdu* pdu);
@@ -41,6 +42,7 @@ static int8_t process_read_holding_registers(ModbusServer* server, ModbusPdu* re
 
 static int8_t process_write_coil(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu);
 static int8_t process_write_register(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu);
+static int8_t process_mask_write_register(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu);
 
 static int8_t process_write_multiple_coils(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu);
 static int8_t process_write_multiple_registers(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu);
@@ -175,7 +177,7 @@ int8_t process_pdu(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu
         case MODBUS_FUN_RW_MULTIPLE_REGISTERS:
             return process_readwrite_multiple_registers(server, pdu, response_pdu);
         case MODBUS_FUN_MASK_WRITE_REGISTER:
-            return MODBUS_EXC_ILLEGAL_FUNCTION;             
+            return process_mask_write_register(server, pdu, response_pdu);
         case MODBUS_FUN_R_FIFO_QUEUE:
             return MODBUS_EXC_ILLEGAL_FUNCTION;                    
         case MODBUS_FUN_R_FILE_RECORD:
@@ -278,6 +280,22 @@ static int8_t parse_write_multiple_request(ModbusServer* server, ModbusPdu* pdu,
 
     request->values = &pdu->data[5];
     
+    return MODBUS_OK;
+}
+
+static int8_t parse_mask_write_request(ModbusServer* server, ModbusPdu* pdu, ModbusRequestMaskWrite* request) {
+    if (pdu->data_len != 6) {
+        return MODBUS_EXC_ILLEGAL_DATA_VALUE;
+    }
+
+    request->reference_address = uint8_to_uint16_big_endian(&pdu->data[0]);
+    request->and_mask = uint8_to_uint16_big_endian(&pdu->data[2]);
+    request->or_mask = uint8_to_uint16_big_endian(&pdu->data[4]);
+
+    if (request->reference_address > get_registers_count(server, request->type)) {
+        return MODBUS_EXC_ILLEGAL_DATA_ADDRESS;
+    }
+
     return MODBUS_OK;
 }
 
@@ -508,6 +526,21 @@ static int8_t process_write_multiple_registers(ModbusServer* server, ModbusPdu* 
     return build_write_multiple_response(&request, response_pdu);
 }
 
+static int8_t process_mask_write_register(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu) {
+    ModbusRequestMaskWrite request = {
+        .type = MODBUS_TYPE_HOLDING_REGISTER
+    };
+    int8_t result = parse_mask_write_request(server, pdu, &request);
+    if (result != MODBUS_OK) {
+        return result;
+    }
+
+    uint16_t value = server->holding_registers[request.reference_address];
+    value = (value & request.and_mask) | (request.or_mask & ~request.and_mask);
+    server->holding_registers[request.reference_address] = value;
+
+    return build_echo_response(pdu, response_pdu);
+}
 
 static int8_t process_readwrite_multiple_registers(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu) {
     ModbusRequestReadWrite request = {
