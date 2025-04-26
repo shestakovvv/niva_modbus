@@ -41,7 +41,9 @@
         "queue": "c",
         "niva_modbus.h": "c",
         "rx_packet.h": "c",
-        "niva_modbus_stm32.h": "c"
+        "niva_modbus_stm32.h": "c",
+        "niva_modbus_stm32_config.h": "c",
+        "gpio.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

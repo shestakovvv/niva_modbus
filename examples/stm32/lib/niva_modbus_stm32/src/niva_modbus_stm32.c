@@ -1,9 +1,12 @@
 #include "niva_modbus_stm32.h"
 
-#include "niva_modbus_stm32/config.h"
+#include "niva_modbus_stm32_config.h"
 #include "niva_modbus_stm32/tim.h"
 #include "niva_modbus_stm32/usart.h"
 #include "niva_modbus_stm32/rx_packet.h"
+#if (defined(MODBUS_LED_PORT) && defined(MODBUS_LED_PIN)) || (defined(MODBUS_DE_PORT) && defined(MODBUS_DE_PIN))
+#include "niva_modbus_stm32/gpio.h"
+#endif
 
 typedef enum ModbusState {
     MODBUS_STATE_OFF,
@@ -19,18 +22,15 @@ typedef struct ModbusServerStatistic {
     size_t ok_count;
     size_t exceptions_count;
     size_t errors_count;
-    size_t overwritten_rx_packets_count;
-    size_t skipped_rx_packets_count;
     size_t response_time;
     size_t _response_start_time;
 } ModbusServerStatistic;
-
 ModbusServerStatistic SERVER_STATS;
 #endif
 
 #define MODBUS_PACKET_MAX_LEN 256
 
-RxPacket RX_PACKETS_BUFFER[MODBUS_RX_PACKETS_COUNT];
+RxPacket RX_PACKET;
 uint8_t RX_BUFFER[MODBUS_RX_BUFFER_LEN];
 uint8_t* CURRENT_RX_BUFFER_POS = RX_BUFFER;
 uint8_t TX_BUFFER[MODBUS_PACKET_MAX_LEN];
@@ -59,9 +59,7 @@ static inline void modbus_check_state(void) {
 }
 
 int8_t modbus_update(ModbusServer* server) {
-    static size_t CURRENT_PACKET_NUM = 0;
-
-    RxPacket* packet = &RX_PACKETS_BUFFER[CURRENT_PACKET_NUM];
+    RxPacket* packet = &RX_PACKET;
 
     modbus_check_state();
   
@@ -102,14 +100,10 @@ int8_t modbus_update(ModbusServer* server) {
     } else {
         modbus_start_receive(CURRENT_RX_BUFFER_POS, MODBUS_PACKET_MAX_LEN);
     }
-
-    rx_packet_next(&CURRENT_PACKET_NUM);
     return result;
 }
 
 static void modbus_on_new_packet_received(void) {
-    static size_t CURRENT_PACKET_NUM = 0;
-
     modbus_usart_stop_receive();
 
     RxPacket new_packet = {
@@ -123,22 +117,7 @@ static void modbus_on_new_packet_received(void) {
         CURRENT_RX_BUFFER_POS = RX_BUFFER;
     }
 
-    #if MODBUS_REWRITE_NOT_PROCESSED_PACKETS == false
-    if (RX_PACKETS_BUFFER[CURRENT_PACKET_NUM].is_new) {
-        #if MOSBUS_SERVER_STATS == true
-        SERVER_STATS.overwritten_rx_packets_count++;
-        #endif
-        return;
-    }
-    #if MOSBUS_SERVER_STATS == true
-    else {
-        SERVER_STATS.skipped_rx_packets_count++;
-    }
-    #endif
-    #endif
-
-    RX_PACKETS_BUFFER[CURRENT_PACKET_NUM] = new_packet;
-    rx_packet_next(&CURRENT_PACKET_NUM);
+    RX_PACKET = new_packet;
 }
 
 inline void modbus_on_tim_irq(void) {
@@ -159,7 +138,7 @@ inline void modbus_on_usart_irq(void) {
         SERVER_STATS.response_time = HAL_GetTick() - SERVER_STATS._response_start_time;
         #endif
     } else {
-        // для обнуления таймера конца пакета
+        // обнуления таймера конца пакета по приему байта
         modbus_tim_restart();
     }
 }

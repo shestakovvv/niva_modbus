@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./config.h"
+#include "niva_modbus_stm32_config.h"
 
 #define DMA1_ChannelX(x) ((DMA_Channel_TypeDef *)((uint32_t)DMA1_Channel1_BASE + (x - 1) * (DMA1_Channel2_BASE - DMA1_Channel1_BASE)))
 #define DMA2_ChannelX(x) ((DMA_Channel_TypeDef *)((uint32_t)DMA2_Channel1_BASE + (x - 1) * (DMA2_Channel2_BASE - DMA2_Channel1_BASE)))

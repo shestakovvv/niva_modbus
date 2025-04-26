@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./config.h"
+#include "niva_modbus_stm32_config.h"
 
 static inline void modbus_tim_init(void) {
     MODBUS_TIM->CR1 &= ~TIM_CR1_CEN;

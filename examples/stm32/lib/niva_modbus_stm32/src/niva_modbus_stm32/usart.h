@@ -1,6 +1,6 @@
 #pragma once
 
-#include "./config.h"
+#include "niva_modbus_stm32_config.h"
 #include "./dma.h"
 
 void modbus_usart_start_receive(uint8_t* data, size_t len);

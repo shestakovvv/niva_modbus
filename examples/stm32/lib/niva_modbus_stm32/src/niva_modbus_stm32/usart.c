@@ -1,5 +1,10 @@
 #include "./usart.h"
 
+#if defined(MODBUS_DE_PORT) && defined(MODBUS_DE_PIN)
+#include "./gpio.h"
+#endif
+
+
 volatile uint32_t DMA_RECEIVE_LEN;
 
 inline void modbus_usart_start_receive(uint8_t* data, size_t len) {
