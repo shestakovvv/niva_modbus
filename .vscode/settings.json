@@ -38,7 +38,9 @@
         "data_model.h": "c",
         "led.h": "c",
         "random": "c",
-        "queue": "c"
+        "queue": "c",
+        "niva_modbus.h": "c",
+        "rx_packet.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
