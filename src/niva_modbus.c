@@ -108,8 +108,6 @@ static inline size_t get_registers_count(ModbusServer* server, ModbusDataModelTy
 /// @param adu - ModbusAdu output structure
 /// @return exception codes < 0 or 0 if all Ok
 int8_t request_buffer_to_modbus_adu(uint8_t* data, size_t len, ModbusAdu* adu) {
-    // TODO: add asserts
-
     if (len < MODBUS_MIN_FRAME_SIZE) {
         return MODBUS_ERR_FRAME_TO_SHORT;
     }
@@ -157,8 +155,6 @@ void finalize_response(ModbusAdu* adu, int8_t exception, uint8_t* data, size_t* 
 /// @param response_pdu response PDU
 /// @return exception code 0 - MODBUS_OK; >0 - Modbus exception
 int8_t process_pdu(ModbusServer* server, ModbusPdu* pdu, ModbusPdu* response_pdu) {
-    // TODO: assert pdu != null
-
     switch (pdu->function_code) {
         case MODBUS_FUN_R_COILS:
             return process_read_coils(server, pdu, response_pdu);
@@ -216,7 +212,6 @@ static int8_t parse_read_request(ModbusServer* server, ModbusPdu* pdu, ModbusReq
     if (
         request->quantity < 1 ||
         request->quantity > get_registers_max_count(request->type) ||
-        // TODO: возможно тут лучше возвращать доступный результат, а не ошибку
         request->starting_address + request->quantity > get_registers_count(server, request->type)
     ) {
         return MODBUS_EXC_ILLEGAL_DATA_ADDRESS;
@@ -536,3 +531,5 @@ static int8_t process_readwrite_multiple_registers(ModbusServer* server, ModbusP
 
     return build_read_holding_registers_response(server, &read_request, response_pdu);
 }
+
+// TODO: add asserts in functions

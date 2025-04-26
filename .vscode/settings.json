@@ -40,7 +40,8 @@
         "random": "c",
         "queue": "c",
         "niva_modbus.h": "c",
-        "rx_packet.h": "c"
+        "rx_packet.h": "c",
+        "niva_modbus_stm32.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

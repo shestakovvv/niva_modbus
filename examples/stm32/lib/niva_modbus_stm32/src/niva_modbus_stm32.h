@@ -2,7 +2,6 @@
 
 #include "niva_modbus.h"
 
-void modbus_init(void);
 int8_t modbus_update(ModbusServer* server);
 
 void modbus_on_tim_irq(void);

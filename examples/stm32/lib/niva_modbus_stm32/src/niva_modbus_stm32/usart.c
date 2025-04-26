@@ -26,5 +26,5 @@ inline void modbus_usart_transmit(uint8_t* data, size_t len) {
     modbus_dma_transmit(DMA1_ChannelX(MODBUS_USART_DMA_TX_CH_NUM), (uint32_t)&MODBUS_USART->TDR, (uint32_t)data, (uint32_t)len);
 
     MODBUS_USART->CR3 |= USART_CR3_DMAT;
-    MODBUS_USART->CR1 |= USART_CR1_TE;
+    MODBUS_USART->CR1 |= USART_CR1_TE | USART_CR1_TCIE;
 }
