@@ -52,7 +52,8 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
 		    "toolchainFile": "${sourceDir}/examples/stm32/cmake/gcc-arm-none-eabi.cmake",
             "cacheVariables": {
-                "BUILD_STM32_EXAMPLES": true
+                "BUILD_STM32_EXAMPLES": true,
+                "NIVA_MODBUS_STM32_USE_DEFAULT_CONFIG": true
             }
         },
         {

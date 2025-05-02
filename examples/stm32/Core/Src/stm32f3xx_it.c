@@ -57,10 +57,7 @@ volatile bool IS_FIRST_BYTE_RECEIVED = false;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern TIM_HandleTypeDef htim3;
-extern DMA_HandleTypeDef hdma_usart2_rx;
-extern DMA_HandleTypeDef hdma_usart2_tx;
-extern UART_HandleTypeDef huart2;
+
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -213,7 +210,6 @@ void DMA1_Channel6_IRQHandler(void)
   modbus_on_dma_rx_irq();
   #ifdef HAL_MODBUS
   /* USER CODE END DMA1_Channel6_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart2_rx);
   /* USER CODE BEGIN DMA1_Channel6_IRQn 1 */
   #endif
   /* USER CODE END DMA1_Channel6_IRQn 1 */
@@ -228,7 +224,6 @@ void DMA1_Channel7_IRQHandler(void)
   modbus_on_dma_tx_irq();
   #ifdef HAL_MODBUS
   /* USER CODE END DMA1_Channel7_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart2_tx);
   /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
   #endif
   /* USER CODE END DMA1_Channel7_IRQn 1 */
@@ -243,7 +238,6 @@ void TIM3_IRQHandler(void)
   modbus_on_tim_irq();
   #ifdef HAL_MODBUS
   /* USER CODE END TIM3_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim3);
   /* USER CODE BEGIN TIM3_IRQn 1 */
   #endif
   /* USER CODE END TIM3_IRQn 1 */
@@ -258,7 +252,6 @@ void USART2_IRQHandler(void)
   modbus_on_usart_irq();
   #ifdef HAL_MODBUS
   /* USER CODE END USART2_IRQn 0 */
-  HAL_UART_IRQHandler(&huart2);
   /* USER CODE BEGIN USART2_IRQn 1 */
   #endif
   /* USER CODE END USART2_IRQn 1 */

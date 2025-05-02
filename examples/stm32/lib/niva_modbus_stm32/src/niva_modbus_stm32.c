@@ -50,7 +50,7 @@ static inline void modbus_start_transmit(uint8_t* data, size_t len) {
 static inline void modbus_check_state(void) {
     if (MODBUS_STATE == MODBUS_STATE_OFF) {
         modbus_start_receive(CURRENT_RX_BUFFER_POS, MODBUS_PACKET_MAX_LEN);
-        modbus_tim_init();
+        modbus_tim_init(MODBUS_TIM);
     } else if (MODBUS_STATE == MODBUS_STATE_TX) {
         if (HAL_GetTick() - MODBUS_STATE_CHANGE_TIME > MODBUS_TX_TIMEOUT) {
             modbus_start_receive(CURRENT_RX_BUFFER_POS, MODBUS_PACKET_MAX_LEN);
@@ -121,17 +121,16 @@ static void modbus_on_new_packet_received(void) {
 }
 
 inline void modbus_on_tim_irq(void) {
-    if (MODBUS_TIM->SR & TIM_SR_UIF) {
-        MODBUS_TIM->SR &= ~TIM_SR_UIF;
-        modbus_tim_stop();
+    if (LL_TIM_IsActiveFlag_UPDATE(MODBUS_TIM)) {
+        LL_TIM_ClearFlag_UPDATE(MODBUS_TIM);
+        modbus_tim_stop(MODBUS_TIM);
         modbus_on_new_packet_received();
     }
 }
 
 inline void modbus_on_usart_irq(void) {
-    if (MODBUS_USART->ISR & USART_ISR_TC) {
-        MODBUS_USART->ICR |= USART_ICR_TCCF;
-    
+    if (LL_USART_IsActiveFlag_TC(MODBUS_USART)) {
+        LL_USART_ClearFlag_TC(MODBUS_USART);
         modbus_start_receive(CURRENT_RX_BUFFER_POS, MODBUS_PACKET_MAX_LEN);
 
         #if MOSBUS_SERVER_STATS == true
@@ -139,21 +138,21 @@ inline void modbus_on_usart_irq(void) {
         #endif
     } else {
         // обнуления таймера конца пакета по приему байта
-        modbus_tim_restart();
+        modbus_tim_restart(MODBUS_TIM);
     }
 }
 
 inline void modbus_on_dma_rx_irq(void) {
-    if (MODBUS_USART_DMA_RX->ISR & DMA_ISR_TCIF_X(MODBUS_USART_DMA_RX_CH_NUM)) {
-        MODBUS_USART_DMA_RX->IFCR |= DMA_IFCR_CTCIF_X(MODBUS_USART_DMA_RX_CH_NUM);
-        modbus_tim_stop();
+    if (LL_DMA_IsActiveFlag_TCX(MODBUS_USART_DMA_RX, MODBUS_USART_DMA_RX_CH_NUM)) {
+        LL_DMA_ClearFlag_TCX(MODBUS_USART_DMA_RX, MODBUS_USART_DMA_RX_CH_NUM);
+        modbus_tim_stop(MODBUS_TIM);
         modbus_on_new_packet_received();
     }
 }
 
 inline void modbus_on_dma_tx_irq(void) {
-    if (MODBUS_USART_DMA_TX->ISR & DMA_ISR_TCIF_X(MODBUS_USART_DMA_TX_CH_NUM)) {
-        MODBUS_USART_DMA_TX->IFCR |= DMA_IFCR_CTCIF_X(MODBUS_USART_DMA_TX_CH_NUM);
+    if (LL_DMA_IsActiveFlag_TCX(MODBUS_USART_DMA_TX, MODBUS_USART_DMA_TX_CH_NUM)) {
+        LL_DMA_ClearFlag_TCX(MODBUS_USART_DMA_TX, MODBUS_USART_DMA_TX_CH_NUM);
     }
 }
 

@@ -15,17 +15,17 @@
 /// Должен быть настрое CubeMx и вызван до использования
 #define MODBUS_USART USART2
 #endif
-#ifndef MODBUS_USART_DMA_RX
+#ifndef MODBUS_USART_DMA_RX_NUM
 /// DMA используемый для приема данных по юарту.
-#define MODBUS_USART_DMA_RX DMA1
+#define MODBUS_USART_DMA_RX_NUM 1
 #endif
 #ifndef MODBUS_USART_DMA_RX_CH_NUM
 /// номер канала dma uart на прием.
 #define MODBUS_USART_DMA_RX_CH_NUM 6
 #endif
-#ifndef MODBUS_USART_DMA_TX
+#ifndef MODBUS_USART_DMA_TX_NUM
 /// DMA используемый для передачи данных по юарту.
-#define MODBUS_USART_DMA_TX DMA1
+#define MODBUS_USART_DMA_TX_NUM 1
 #endif
 #ifndef MODBUS_USART_DMA_TX_CH_NUM
 /// номер канала dma uart на передачу.

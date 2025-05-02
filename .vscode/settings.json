@@ -43,7 +43,8 @@
         "rx_packet.h": "c",
         "niva_modbus_stm32.h": "c",
         "niva_modbus_stm32_config.h": "c",
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "stm32f3xx_hal.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

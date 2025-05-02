@@ -31,6 +31,17 @@ if(BUILD_NATIVE_EXAMPLES)
         -DNIVA_MODBUS_DEBUG
     )
 elseif(BUILD_STM32_EXAMPLES)
+    include(FetchContent)
+    FetchContent_Declare(
+            niva_modbus_stm32
+            GIT_REPOSITORY https://github.com/shestakovvv/niva_modbus_stm32.git
+            GIT_TAG main # or the version you want
+            GIT_SHALLOW TRUE
+    )
+
+    FetchContent_MakeAvailable(niva_modbus_stm32)
+    # add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/examples/stm32/lib/niva_modbus_stm32)
+
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/examples/stm32)
 endif()
 
