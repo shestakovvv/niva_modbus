@@ -58,8 +58,7 @@
             "swoConfig": {
                 "enabled": true,
                 "source": "probe",
-                "cpuFrequency": 16000000,
-                "swoFrequency": 200000,
+                "cpuFrequency": 72000000,
                 "decoders": [
                     { "type": "console", "label": "ITM", "port": 0 }
                 ],
