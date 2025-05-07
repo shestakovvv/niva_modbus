@@ -20,6 +20,8 @@ target_include_directories(${LIB_NAME} INTERFACE
 
 target_sources(${LIB_NAME} INTERFACE
     src/niva_modbus_stm32.c
+    src/niva_modbus_stm32/lock.c
+    src/niva_modbus_stm32/lock.h
     src/niva_modbus_stm32/usart.c
     src/niva_modbus_stm32/usart.h
     src/niva_modbus_stm32/tim.h

@@ -24,18 +24,6 @@ TaskHandle_t MODBUS_TASK_HANDLE = NULL;
 ModbusServer MODBUS_SERVER;
 SemaphoreHandle_t MODBUS_SERVER_MUTEX;
 
-inline ModbusServer* modbus_server_lock(TickType_t xTicksToWait) {
-    if (xSemaphoreTake(MODBUS_SERVER_MUTEX, xTicksToWait) == pdTRUE) {
-        return &MODBUS_SERVER;
-    }
-    return NULL;
-}
-
-inline void modbus_server_unlock(ModbusServer* server) {
-    (void)server;
-    xSemaphoreGive(MODBUS_SERVER_MUTEX);
-}
-
 #define MODBUS_EVENT_NEW_PACKET_RECEIVED    (1UL << 0)
 #define MODBUS_EVENT_PACKET_TRANSMITTED     (1UL << 1)
 
@@ -149,27 +137,23 @@ void modbus_task(void *args)
                         break;
                     }
         
-                    ModbusServer* server = modbus_server_lock(MODBUS_ERROR_TIMEOUT_VALUE);
-                    if (server == NULL) {
-                        break;
-                    }
-    
-                    #if MOSBUS_SERVER_STATS == true
-                    if (server->address == new_packet[0]) {
-                        SERVER_STATS._response_start_time = HAL_GetTick();
-                    }
-                    #endif
-        
                     size_t tx_buffer_len = 0;
-                    int8_t result = modbus_server_poll(
-                        server, 
-                        new_packet, 
-                        new_packet_len, 
-                        TX_BUFFER, 
-                        &tx_buffer_len);
-        
-                    is_response_required = server->response_required;
-                    modbus_server_unlock(server);
+                    WITH_MODBUS_SERVER_LOCK(server, MODBUS_ERROR_TIMEOUT_VALUE) {
+                        #if MOSBUS_SERVER_STATS == true
+                        if (server->address == new_packet[0]) {
+                            SERVER_STATS._response_start_time = HAL_GetTick();
+                        }
+                        #endif
+            
+                        int8_t result = modbus_server_poll(
+                            server, 
+                            new_packet, 
+                            new_packet_len, 
+                            TX_BUFFER, 
+                            &tx_buffer_len);
+            
+                        is_response_required = server->response_required;
+                    }
                     
                     if (!is_response_required) {
                         break;

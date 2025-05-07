@@ -136,8 +136,7 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    ModbusServer* modbus_server = modbus_server_lock(portMAX_DELAY);
-    if (modbus_server != NULL) {
+    WITH_MODBUS_SERVER_LOCK(modbus_server, portMAX_DELAY) {
       HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, modbus_server->coils[4]);
       HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, modbus_server->coils[5]);
       HAL_GPIO_WritePin(LD6_GPIO_Port, LD6_Pin, modbus_server->coils[6]);
@@ -146,8 +145,7 @@ void StartDefaultTask(void const * argument)
       HAL_GPIO_WritePin(LD9_GPIO_Port, LD9_Pin, modbus_server->coils[9]);
       HAL_GPIO_WritePin(LD10_GPIO_Port, LD10_Pin, modbus_server->coils[10]);
     }
-    modbus_server_unlock(modbus_server);
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(pdMS_TO_TICKS(1));
   }
   /* USER CODE END StartDefaultTask */
 }

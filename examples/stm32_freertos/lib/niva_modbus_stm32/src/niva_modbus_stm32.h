@@ -5,13 +5,12 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "niva_modbus_stm32/lock.h"
+
 void modbus_server_init(void);
 
 extern TaskHandle_t MODBUS_TASK_HANDLE;
 void modbus_task(void *server);
-
-ModbusServer* modbus_server_lock(TickType_t xTicksToWait);
-void modbus_server_unlock(ModbusServer* server);
 
 /// @brief необходимо вызвать в прерывании по таймеру указанному в `niva_modbus_stm32_config.h`
 void modbus_on_tim_irq(void);
