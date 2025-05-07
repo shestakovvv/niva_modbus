@@ -35,35 +35,24 @@
 
 
         {
-        "type": "shell",
-        "label": "Cmake: flash stm32 example",
-        "dependsOn": "CMake: build",
-        "command": "openocd",
-        "args": [
-            "-f",
-            "${input:workspaceFolderForwardSlash}/.config/openocd/stm32f3disco_A203001113.cfg",
-            "-f",
-            "target/stm32f3x.cfg",
-            "-c",
-            "program ${input:launchTargetDirectoryForwardSlash}/example_stm32f3disco.bin 0x08000000 verify reset exit"
-        ],
-        "group": {
-            "kind": "build"
-        }
+            "type": "shell",
+            "label": "Cmake: flash stm32 example",
+            "dependsOn": "CMake: build",
+            "command": "openocd",
+            "args": [
+                "-f",
+                "${input:workspaceFolderForwardSlash}/.config/openocd/stm32f3disco_A203001113.cfg",
+                "-f",
+                "target/stm32f3x.cfg",
+                "-c",
+                "program ${input:launchTargetDirectoryForwardSlash}/${input:getLaunchTargetFilenameBin} 0x08000000 verify reset exit"
+            ],
+            "group": {
+                "kind": "build"
+            }
         }
     ],
     "inputs": [
-    {
-      "id": "workspaceFolderForwardSlash",
-      "type": "command",
-      "command": "extension.commandvariable.transform",
-      "args": {
-        "text": "${workspaceFolder}",
-        "find": "\\\\",
-        "replace": "/",
-        "flags": "g"
-      }
-    },
     {
       "id": "workspaceFolderForwardSlash",
       "type": "command",
@@ -96,6 +85,28 @@
         "replace": "/",
         "flags": "g"
       }
-    }
+    },
+    {
+      "id": "launchTargetPathForwardSlash",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": {
+        "text": "${command:cmake.launchTargetPath}",
+        "find": "\\\\",
+        "replace": "/",
+        "flags": "g"
+      }
+    },
+    {
+      "id": "getLaunchTargetFilenameBin",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": {
+        "text": "${command:cmake.getLaunchTargetFilename}",
+        "find": "\\.elf",
+        "replace": ".bin",
+        "flags": "g"
+      }
+    },
   ]
 }

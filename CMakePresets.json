@@ -52,14 +52,22 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
 		    "toolchainFile": "${sourceDir}/examples/stm32/cmake/gcc-arm-none-eabi.cmake",
             "cacheVariables": {
-                "BUILD_STM32_EXAMPLES": true,
+                "BUILD_STM32_EXAMPLES": true
+            }
+        },
+        {
+            "name": "DebugStm32Example",
+            "inherits": "default_stm32",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
                 "NIVA_MODBUS_STM32_USE_DEFAULT_CONFIG": true
             }
         },
         {
-            "name": "DebugStm32Examples",
+            "name": "DebugStm32FreertosExample",
             "inherits": "default_stm32",
             "cacheVariables": {
+                "BUILD_STM32_EXAMPLES_FREERTOS": true,
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         }
@@ -86,8 +94,12 @@
             "configurePreset": "DebugNativeExamples"
         },
         {
-            "name": "DebugStm32Examples",
-            "configurePreset": "DebugStm32Examples"
+            "name": "DebugStm32Example",
+            "configurePreset": "DebugStm32Example"
+        },
+        {
+            "name": "DebugStm32FreertosExample",
+            "configurePreset": "DebugStm32FreertosExample"
         }
     ]
 }

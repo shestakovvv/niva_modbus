@@ -44,7 +44,10 @@
         "niva_modbus_stm32.h": "c",
         "niva_modbus_stm32_config.h": "c",
         "gpio.h": "c",
-        "stm32f3xx_hal.h": "c"
+        "stm32f3xx_hal.h": "c",
+        "cmsis_os.h": "c",
+        "freertos.h": "c",
+        "task.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
