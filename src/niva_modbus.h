@@ -6,7 +6,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#include "modbus/data_model.h"
 #include "modbus/exception_codes.h"
+#include "modbus/function_codes.h"
 
 typedef bool DiscreteInput;
 typedef bool Coil;
@@ -32,3 +34,5 @@ int8_t modbus_server_poll(
     size_t data_len, 
     uint8_t* response_data, 
     size_t* response_data_len);
+
+int8_t modbus_buffer_to_adu(uint8_t* data, size_t data_len, ModbusAdu* adu);

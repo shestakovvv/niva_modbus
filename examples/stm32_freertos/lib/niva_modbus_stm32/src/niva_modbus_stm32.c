@@ -145,7 +145,9 @@ void modbus_task(void *args)
                         }
                         #endif
             
-                        int8_t result = modbus_server_poll(
+                        // FIXME: add result usage
+                        // int8_t result = modbus_server_poll(
+                        modbus_server_poll(
                             server, 
                             new_packet, 
                             new_packet_len, 

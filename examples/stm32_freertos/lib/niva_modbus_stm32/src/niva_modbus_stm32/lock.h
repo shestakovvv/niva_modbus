@@ -12,3 +12,4 @@ void _modbus_server_unlock(void);
     for (ModbusServer *server_var_name = _modbus_server_lock(xTicksToWait);        \
          server_var_name != NULL;                                            \
          _modbus_server_unlock(), server_var_name = NULL)
+         

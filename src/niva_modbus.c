@@ -1,8 +1,6 @@
 #include "niva_modbus.h"
 
 #include "modbus/crc16.h"
-#include "modbus/function_codes.h"
-#include "modbus/data_model.h"
 #include "modbus/endianess.h"
 
 #include <string.h>
@@ -16,7 +14,7 @@
 
 
 static inline size_t get_registers_count(ModbusServer* server, ModbusDataModelType type);
-int8_t request_buffer_to_modbus_adu(uint8_t* data, size_t len, ModbusAdu* adu);
+int8_t modbus_buffer_to_adu(uint8_t* data, size_t len, ModbusAdu* adu);
 void finalize_response(ModbusAdu* adu, int8_t exception, uint8_t* data, size_t* data_len);
 
 
@@ -62,7 +60,7 @@ int8_t modbus_server_poll(
         }
 
         ModbusAdu adu = {0};
-        int8_t result = request_buffer_to_modbus_adu(data, data_len, &adu);
+        int8_t result = modbus_buffer_to_adu(data, data_len, &adu);
         if (result != MODBUS_OK) {
             return result;
         }
@@ -109,7 +107,7 @@ static inline size_t get_registers_count(ModbusServer* server, ModbusDataModelTy
 /// @param len - request buffer length
 /// @param adu - ModbusAdu output structure
 /// @return exception codes < 0 or 0 if all Ok
-int8_t request_buffer_to_modbus_adu(uint8_t* data, size_t len, ModbusAdu* adu) {
+int8_t modbus_buffer_to_adu(uint8_t* data, size_t len, ModbusAdu* adu) {
     if (len < MODBUS_MIN_FRAME_SIZE) {
         return MODBUS_ERR_FRAME_TO_SHORT;
     }
