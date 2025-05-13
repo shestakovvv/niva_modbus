@@ -62,6 +62,7 @@ int8_t modbus_server_poll(
         ModbusAdu adu = {0};
         int8_t result = modbus_buffer_to_adu(data, data_len, &adu);
         if (result != MODBUS_OK) {
+            server->response_required = false;
             return result;
         }
         
