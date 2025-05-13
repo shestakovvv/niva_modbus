@@ -56,6 +56,22 @@ typedef struct ModbusRequestReadWrite {
     uint8_t* write_values;
 } ModbusRequestReadWrite;
 
+
+#ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+typedef enum ModbusRequestType {
+    MODBUS_REQUEST_READ = 0,
+    MODBUS_REQUEST_WRITE = 1,
+    MODBUS_REQUEST_WRITE_MULTIPLE = 2,
+    MODBUS_REQUEST_MASK_WRITE = 3,
+    MODBUS_REQUEST_READ_WRITE = 4,
+} ModbusRequestType;
+
+typedef struct ModbusRequest {
+    ModbusRequestType type;
+    void* request;
+} ModbusRequest;
+#endif
+
 typedef struct ModbusAdu {
     uint8_t server_address;
     ModbusPdu pdu;

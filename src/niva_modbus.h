@@ -26,6 +26,10 @@ typedef struct ModbusServer {
     size_t input_registers_count;
     HoldingRegister* holding_registers;
     size_t holding_registers_count;
+
+#ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+    int8_t (*before_response_hook)(ModbusRequest*);
+#endif
 } ModbusServer;
 
 int8_t modbus_server_poll(

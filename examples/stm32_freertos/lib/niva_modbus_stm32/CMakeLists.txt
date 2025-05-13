@@ -25,6 +25,7 @@ target_sources(${LIB_NAME} INTERFACE
     src/niva_modbus_stm32/usart.c
     src/niva_modbus_stm32/usart.h
     src/niva_modbus_stm32/tim.h
+    src/niva_modbus_stm32/dma.c
     src/niva_modbus_stm32/dma.h
     src/niva_modbus_stm32/gpio.h
     ${NIVA_MODBUS_STM32_SOURCE}

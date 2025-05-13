@@ -136,6 +136,13 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+    xEventGroupWaitBits(
+            MODBUS_EVENT_GROUP,  
+            MODBUS_EVENT_LED_UPDATE,
+            pdTRUE,
+            pdFALSE,
+            portMAX_DELAY);
+            
     uint32_t coils = 0;
     WITH_MODBUS_SERVER_LOCK(modbus_server, portMAX_DELAY) {
       coils = (modbus_server->coils[4]) | 
@@ -145,7 +152,6 @@ void StartDefaultTask(void const * argument)
         (modbus_server->coils[8] << 4) |
         (modbus_server->coils[9] << 5) |
         (modbus_server->coils[10] << 6);
-
     }
     HAL_GPIO_WritePin(LD4_GPIO_Port, LD4_Pin, (coils & 0x01));
     HAL_GPIO_WritePin(LD5_GPIO_Port, LD5_Pin, ((coils >> 1) & 0x01));
@@ -154,7 +160,7 @@ void StartDefaultTask(void const * argument)
     HAL_GPIO_WritePin(LD8_GPIO_Port, LD8_Pin, ((coils >> 4) & 0x01));
     HAL_GPIO_WritePin(LD9_GPIO_Port, LD9_Pin, ((coils >> 5) & 0x01));
     HAL_GPIO_WritePin(LD10_GPIO_Port, LD10_Pin, ((coils >> 6) & 0x01));
-    vTaskDelay(pdMS_TO_TICKS(1));
+    // vTaskDelay(pdMS_TO_TICKS(1));
   }
   /* USER CODE END StartDefaultTask */
 }

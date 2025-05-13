@@ -23,6 +23,7 @@ HoldingRegister HOLDING_REGISTERS[HOLDING_REGISTERS_COUNT] = {0};
 TaskHandle_t MODBUS_TASK_HANDLE = NULL;
 ModbusServer MODBUS_SERVER;
 SemaphoreHandle_t MODBUS_SERVER_MUTEX;
+EventGroupHandle_t MODBUS_EVENT_GROUP;
 
 #define MODBUS_EVENT_NEW_PACKET_RECEIVED    (1UL << 0)
 #define MODBUS_EVENT_PACKET_TRANSMITTED     (1UL << 1)
@@ -44,6 +45,8 @@ uint8_t RX_BUFFER[MODBUS_RX_BUFFER_LEN];
 uint8_t* CURRENT_RX_BUFFER_POS = RX_BUFFER;
 uint8_t TX_BUFFER[MODBUS_PACKET_MAX_LEN];
 
+int8_t modbus_before_response(ModbusRequest* request);
+
 void modbus_server_init(void) {
     MODBUS_SERVER = (ModbusServer) {
         .address = 1,
@@ -55,28 +58,16 @@ void modbus_server_init(void) {
         .input_registers_count = INPUT_REGISTERS_COUNT,
         .holding_registers = HOLDING_REGISTERS,
         .holding_registers_count = HOLDING_REGISTERS_COUNT,
+        .before_response_hook = modbus_before_response,
     };
     MODBUS_SERVER_MUTEX = xSemaphoreCreateMutex();
-}
-
-static inline void modbus_start_receive(void) {
-    modbus_usart_start_receive(CURRENT_RX_BUFFER_POS, MODBUS_PACKET_MAX_LEN);
-    modbus_tim_init(MODBUS_TIM);
+    MODBUS_EVENT_GROUP = xEventGroupCreate();
 }
 
 void modbus_stop(void) {
-    uint32_t transfer_dir = LL_USART_GetTransferDirection(MODBUS_USART);
-    if (LL_TIM_IsEnabledCounter(MODBUS_TIM)) {
-        modbus_tim_stop(MODBUS_TIM);
-    }
-    if (transfer_dir == LL_USART_DIRECTION_TX_RX) {
-        modbus_usart_stop_receive();
-        modbus_usart_stop_transmit();
-    } else if (LL_USART_DIRECTION_TX) {
-        modbus_usart_stop_transmit();
-    } else if (LL_USART_DIRECTION_RX) {
-        modbus_usart_stop_receive();
-    }
+    modbus_tim_stop(MODBUS_TIM);
+    modbus_usart_stop_receive();
+    modbus_usart_stop_transmit();
 }
 
 static inline void modbus_stop_receive(void) {
@@ -96,11 +87,13 @@ static inline size_t modbus_update_buffer_pos(void) {
 
 void modbus_restart(void) {
     modbus_stop();
-    modbus_start_receive();
+    modbus_usart_start_receive(CURRENT_RX_BUFFER_POS, MODBUS_PACKET_MAX_LEN);
+    modbus_tim_init(MODBUS_TIM);
 }
 
 void modbus_task(void *args)
 {
+    (void)args;
     uint32_t irq_notification = 0;
 
     modbus_restart();
@@ -138,6 +131,7 @@ void modbus_task(void *args)
                     }
         
                     size_t tx_buffer_len = 0;
+                    int8_t poll_result = 0;
                     WITH_MODBUS_SERVER_LOCK(server, MODBUS_ERROR_TIMEOUT_VALUE) {
                         #if MOSBUS_SERVER_STATS == true
                         if (server->address == new_packet[0]) {
@@ -145,9 +139,7 @@ void modbus_task(void *args)
                         }
                         #endif
             
-                        // FIXME: add result usage
-                        // int8_t result = modbus_server_poll(
-                        modbus_server_poll(
+                        poll_result = modbus_server_poll(
                             server, 
                             new_packet, 
                             new_packet_len, 
@@ -160,9 +152,9 @@ void modbus_task(void *args)
                     if (!is_response_required) {
                         break;
                     }
-        
+                    
                     modbus_usart_transmit(TX_BUFFER, tx_buffer_len);
-
+                    
                     #if defined(MODBUS_LED_PORT) && defined(MODBUS_LED_PIN)
                         modbus_gpio_toggle(MODBUS_LED_PORT, MODBUS_LED_PIN);
                     #endif
@@ -188,6 +180,9 @@ inline void modbus_on_tim_irq(void) {
     if (LL_TIM_IsActiveFlag_UPDATE(MODBUS_TIM)) {
         LL_TIM_ClearFlag_UPDATE(MODBUS_TIM);
 
+        modbus_tim_stop(MODBUS_TIM);
+        modbus_usart_stop_receive();
+
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
         xTaskNotifyFromISR(
             MODBUS_TASK_HANDLE,
@@ -209,6 +204,8 @@ inline void modbus_on_usart_irq(void) {
             eSetBits,
             &xHigherPriorityTaskWoken);
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    } else if (LL_USART_IsActiveFlag_ORE(MODBUS_USART)) {
+        LL_USART_ClearFlag_ORE(MODBUS_USART);
     } else {
         modbus_tim_restart(MODBUS_TIM);
     }
@@ -217,6 +214,14 @@ inline void modbus_on_usart_irq(void) {
 inline void modbus_on_dma_rx_irq(void) {
     if (LL_DMA_IsActiveFlag_TCX(MODBUS_USART_DMA_RX, MODBUS_USART_DMA_RX_CH_NUM)) {
         LL_DMA_ClearFlag_TCX(MODBUS_USART_DMA_RX, MODBUS_USART_DMA_RX_CH_NUM);
+
+        uint32_t received_len = modbus_usart_get_received_len();
+        if (received_len == 0) {
+            return;
+        }
+
+        modbus_tim_stop(MODBUS_TIM);
+        modbus_usart_stop_receive();
 
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
         xTaskNotifyFromISR(
@@ -232,6 +237,25 @@ inline void modbus_on_dma_tx_irq(void) {
     if (LL_DMA_IsActiveFlag_TCX(MODBUS_USART_DMA_TX, MODBUS_USART_DMA_TX_CH_NUM)) {
         LL_DMA_ClearFlag_TCX(MODBUS_USART_DMA_TX, MODBUS_USART_DMA_TX_CH_NUM);
     }
+}
+
+int8_t modbus_before_response(ModbusRequest* request) {
+    if (request->type == MODBUS_REQUEST_WRITE) {
+        ModbusRequestWrite* r = (ModbusRequestWrite*)request->request;
+        if (r->type == MODBUS_TYPE_COIL && 
+            r->address >= 4 &&
+            r->address <= 10) {
+                xEventGroupSetBits(MODBUS_EVENT_GROUP, MODBUS_EVENT_LED_UPDATE);
+        }
+    } else if (request->type == MODBUS_REQUEST_WRITE_MULTIPLE) {
+        ModbusRequestWriteMultiple* r = (ModbusRequestWriteMultiple*)request->request;
+        if (r->type == MODBUS_TYPE_COIL &&
+            r->starting_address <= 10 && 
+            r->starting_address + r->quantity > 4) {
+                xEventGroupSetBits(MODBUS_EVENT_GROUP, MODBUS_EVENT_LED_UPDATE);
+        }
+    }
+    return MODBUS_OK;
 }
 
 // FIXME: стоило бы добавить проверку на случай, если записи в буффере перекроются и один пакет перезапишет другой

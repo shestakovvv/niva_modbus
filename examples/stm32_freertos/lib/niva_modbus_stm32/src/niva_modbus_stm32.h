@@ -4,8 +4,13 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "event_groups.h"
 
 #include "niva_modbus_stm32/lock.h"
+
+#define MODBUS_EVENT_LED_UPDATE  (1 << 0)
+
+extern EventGroupHandle_t MODBUS_EVENT_GROUP;
 
 void modbus_server_init(void);
 

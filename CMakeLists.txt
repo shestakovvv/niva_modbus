@@ -34,6 +34,9 @@ elseif(BUILD_STM32_EXAMPLES)
     if (BUILD_STM32_EXAMPLES_FREERTOS)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/examples/stm32_freertos/lib/niva_modbus_stm32)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/examples/stm32_freertos)
+    target_compile_definitions(niva_modbus PUBLIC
+        -DNIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+    )
     else()
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/examples/stm32/lib/niva_modbus_stm32)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/examples/stm32)

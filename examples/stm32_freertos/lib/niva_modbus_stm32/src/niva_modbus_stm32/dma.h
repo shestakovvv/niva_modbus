@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "niva_modbus_stm32_config.h"
 
 #define CONCAT4(a, b, c, d) a ## b ## c ## d
@@ -17,14 +20,41 @@
 #define MODBUS_USART_DMA_TX DMAx(MODBUS_USART_DMA_TX_NUM)
 #define MODBUS_USART_DMA_TX_CH DMAx_Channely(MODBUS_USART_DMA_TX_NUM, MODBUS_USART_DMA_TX_CH_NUM)
 
+#if defined(STM32F1) || defined(STM32F3)
+#define DMA_UNIT_FUN(fun, dma, unit) fun##Channel(dma, unit)
+#else
+#define DMA_UNIT_FUN(fun, dma, unit) fun##Stream(dma, unit)
+#endif
 
-static inline void modbus_dma_transmit(DMA_TypeDef* dma, uint32_t channel, uint32_t peripheral_addr, uint32_t data_addr, uint32_t len) {
-    LL_DMA_DisableChannel(dma, channel);  // Disable channel before configuring
+void modbus_dma_clear_TC_flag(DMA_TypeDef* dma, uint32_t channel);
 
-    LL_DMA_SetPeriphAddress(dma, channel, peripheral_addr);  // Set peripheral address
-    LL_DMA_SetMemoryAddress(dma, channel, data_addr);        // Set memory address
-    LL_DMA_SetDataLength(dma, channel, len);                 // Set transfer length
+static inline void modbus_dma_disable(DMA_TypeDef* dma, uint32_t stream) {
+    LL_DMA_DisableIT_TC(dma, stream);
+    DMA_UNIT_FUN(LL_DMA_Disable, dma, stream);
+}
 
-    LL_DMA_EnableIT_TC(dma, channel);  // Enable transfer complete interrupt
-    LL_DMA_EnableChannel(dma, channel); // Enable DMA channel
+static inline bool modbus_dma_is_enabled(DMA_TypeDef* dma, uint32_t stream) {
+    return (DMA_UNIT_FUN(LL_DMA_IsEnabled, dma, stream) == 1);
+}
+
+static inline void modbus_dma_disable_blocking(DMA_TypeDef* dma, uint32_t stream) {
+    modbus_dma_disable(dma, stream);
+    while (modbus_dma_is_enabled(dma, stream));
+}
+
+static inline void modbus_dma_enable(DMA_TypeDef* dma, uint32_t stream) {
+    DMA_UNIT_FUN(LL_DMA_Enable, dma, stream);
+}
+
+static inline void modbus_dma_config_transmit(DMA_TypeDef* dma, uint32_t stream, uint32_t peripheral_addr, uint32_t data_addr, uint32_t len) {
+    LL_DMA_SetPeriphAddress(dma, stream, peripheral_addr);
+    LL_DMA_SetMemoryAddress(dma, stream, data_addr);
+    LL_DMA_SetDataLength(dma, stream, len);
+
+    modbus_dma_clear_TC_flag(dma, stream);
+    LL_DMA_EnableIT_TC(dma, stream);
+}
+
+static inline uint32_t modbus_dma_get_received_length(DMA_TypeDef* dma, uint32_t stream) {
+    return LL_DMA_GetDataLength(dma, stream);
 }

@@ -420,6 +420,19 @@ static int8_t process_read_coils(ModbusServer* server, ModbusPdu* pdu, ModbusPdu
         return result;
     }
 
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_READ,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
+
     return build_read_coils_response(server, &request, response_pdu);
 }
 
@@ -431,6 +444,19 @@ static int8_t process_read_discrete_inputs(ModbusServer* server, ModbusPdu* pdu,
     if (result != MODBUS_OK) {
         return result;
     }
+
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_READ,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
 
     return build_read_discrete_inputs_response(server, &request, response_pdu);
 }
@@ -444,6 +470,19 @@ static int8_t process_read_input_registers(ModbusServer* server, ModbusPdu* pdu,
         return result;
     }
 
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_READ,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
+
     return build_read_input_registers_response(server, &request, response_pdu);
 }
 
@@ -455,6 +494,19 @@ static int8_t process_read_holding_registers(ModbusServer* server, ModbusPdu* pd
     if (result != MODBUS_OK) {
         return result;
     }
+
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_READ,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
 
     return build_read_holding_registers_response(server, &request, response_pdu);
 }
@@ -470,6 +522,19 @@ static int8_t process_write_coil(ModbusServer* server, ModbusPdu* pdu, ModbusPdu
 
     server->coils[request.address] = (Coil)request.value;
 
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_WRITE,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
+
     return build_echo_response(pdu, response_pdu);
 }
 
@@ -483,6 +548,19 @@ static int8_t process_write_register(ModbusServer* server, ModbusPdu* pdu, Modbu
     }
 
     server->holding_registers[request.address] = request.value;
+
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_WRITE,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
 
     return build_echo_response(pdu, response_pdu);
 }
@@ -505,6 +583,19 @@ static int8_t process_write_multiple_coils(ModbusServer* server, ModbusPdu* pdu,
         server->coils[index + i] = coil_value;
     }
 
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_WRITE_MULTIPLE,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
+
     return build_write_multiple_response(&request, response_pdu);
 }
 
@@ -522,6 +613,19 @@ static int8_t process_write_multiple_registers(ModbusServer* server, ModbusPdu* 
         server->holding_registers[index + i] = uint8_to_uint16_big_endian(&request.values[i * 2]);
     }
 
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_WRITE_MULTIPLE,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
+
     return build_write_multiple_response(&request, response_pdu);
 }
 
@@ -537,6 +641,19 @@ static int8_t process_mask_write_register(ModbusServer* server, ModbusPdu* pdu, 
     uint16_t value = server->holding_registers[request.reference_address];
     value = (value & request.and_mask) | (request.or_mask & ~request.and_mask);
     server->holding_registers[request.reference_address] = value;
+
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_MASK_WRITE,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
 
     return build_echo_response(pdu, response_pdu);
 }
@@ -554,6 +671,19 @@ static int8_t process_readwrite_multiple_registers(ModbusServer* server, ModbusP
     for (uint16_t i = 0; i < request.write_quantity; i++) {
         server->holding_registers[index + i] = uint8_to_uint16_big_endian(&request.write_values[i * 2]);
     }
+
+    #ifdef NIVA_MODBUS_USE_BEFORE_RESPONSE_HOOK
+        if (server->before_response_hook != NULL) {
+            ModbusRequest hook_request = {
+                .type = MODBUS_REQUEST_READ_WRITE,
+                .request = &request
+            };
+            result = server->before_response_hook(&hook_request);
+            if (result != MODBUS_OK) {
+                return result;
+            }
+        }
+    #endif
 
     ModbusRequestRead read_request = {
         .type = request.type,
